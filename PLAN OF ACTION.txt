@@ -1,0 +1,136 @@
+PLAN OF ACTION:
+
+(1) Add event listener for add button
+(2) Get input values for description and amount
+(3) Add input to data structure depending on whether it is an income or expense
+(4) Add new item to UI
+(5) Update the total budget amount based on calculations.
+
+
+
+
+
+MODULES:
+
+UI (User Interface):
+(1) Get input values for description and amount
+(2) Add these values to UI
+(3) Update total budget amount based on calculations (UI)
+
+Data Manipulation:
+(1) Add input to data structure (income/expense)
+(2) Calculate budget
+
+Controller:
+(1) Event handler for add button / delete button "x"
+
+
+
+
+
+So, basically . . .
+
+
+* There are three "modules": the UIController module, the budgetController module, and the main app controller module. These are all IIFEs (Immediately Invoked Function Expressions).
+
+
+* The UIController and budgetController modules each require NO parameters, while the main app controller module requires 2 parameters.
+
+
+* The parameters of the main app controller module are "budgetCtrl" (where budgetController will be passed as an argument), and "UICtrl" (where UIController will be passed as an argument).
+
+
+* All DOM elements are assigned to variables within the UIController module, and stored in an object called "DOMstrings", like so:
+const DOMstrings = {
+        addType: '.add__type',
+        addDesc: '.add__description',
+        addVal: '.add__value',
+        addBtn: '.add__btn',
+        incomeContainer: '.income__list',
+        expenseContainer: '.expenses__list'
+    }
+
+
+* All except the addBtn element are called within this same method. Within this method, they are called as follows:
+document.querySelector(DOMstrings.addType).value
+
+
+* The DOMstrings is returned via a method created, "getDOMstrings()". This method is a property of the object being returned from the UIController module.
+
+
+* This method is called from the main app controller module and assigned to a variable called "DOM", like so:
+const DOM = UICtrl.getDOMstrings();
+
+- The addBtn and addVal variables, for the event listeners, are then retrieved and assigned to local variables:
+-- let addButton = document.querySelector(DOM.addBtn);
+-- let addValue = document.querySelector(DOM.addVal);
+
+
+*REMEMBER, the event listeners lie within the main app controller module ("controller"), which is the "middle" module. It is good practice to add the event listeners in the module that is used as a bridge of communication between the other two modules.
+
+
+* I stored these eventListeners within a function I created called "setEventListeners()".
+
+
+* Note that we are able to decipher whether or not the enter key is pressed by passing "event" in as a parameter to the event listener. We then access the "keyCode" property to test whether or not it is equal to 13, which is the keyCode that responds to the enter keys. It is done like so:
+if(event.keyCode === 13) {
+    addButton.click();
+}
+
+
+* Within the return object for the main app controller, I initialized an "init" function as a property/method. In the interior of the method, the setEventListener() function is called. We then call the init function OUTSIDE OF ANY MODULE (at bottom of program) as follows:
+controller.init();
+
+
+* Within the budgetController module, I created an object to hold the data of our espenses and income. I named this "data". Within this object are TWO inner objects:
+- "allItems", which contains two properties: an empty array called "exp" for our expense items, and an empty array called "inc" for our income items.
+- "totals", which again contains two properties of the same names: "exp" and "inc". The values of these are each initialized to 0, because this is where the total expenses and income are tabulated.
+
+
+* Also within the budgetController module, I created function constructors for expenses and income. Here, we pass an ID, type, and description in as parameters. We then set them to the global variables using the "this" keyword: this.ID = ID; (for example).
+- "ID" is sequential, and is assigned based on how many expenses/incomes have been submitted up to that point. For example, when a new instance of Expense or Income is created, it is "pushed" to the data.allItems[inc] or data.allItems[exp] array, dependeding on the type.
+-- If the array is empty, the ID is set to 0. Else, it is set to the length of the exp or inc array - 1 (the -1 being because the IDs start at 0).
+
+
+
+
+Now for the actual steps . . .
+
+* First, the UIController module grabs the type, description, and value/amount. It then assigns them to variables, and then returns them via a getInput() method so that they can be called from the controller module. Remember, since modules are PRIVATE, we must return them as an object ALWAYS.
+
+
+* When the submit button is clicked, or enter is pressed in the amount text box, the controller module calls the UIController's getInput() method using the UICtrl.getInput(), as in any other function, and assigns it to a local variable named input. let input = UICtrl.getInput();
+
+
+* The controller module then uses this input retrieved from the UIController's getInput() method to pass each individual property of the object returned by this method to budgetController's addItem() method. This method has three parameters, mirroring what is returned by the UIController's getInput() method.
+
+
+* The budgetController's addItem method is called using budgetCtrl.addItem(input.type, input.description, input.amount);
+
+
+* The budgetController module then receives the arguments of this called function and creates a newItem.
+- if the "type" passed in is "inc", then it creates a new Income instance; if the "type" passed in is "exp", then it creates a new Expense instance. The new creation is stored to the newItem variable. This is within the "return" object so that the main app controller can use it.
+
+
+* The main app controller then takes newItem (either Expense or Income) and passes it back to the addListItem() method of UIController as follows:
+- UICtrl.addListItem(newItem, input.type);
+
+
+* The UIController then creates a variable called "amount" and assigns it equal to newItem.value (via the obj parameter of the function).
+- The "amount" variable is then parsed to a float and set to always have 2 decimal places like so: amount = parseFloat(amount).toFixed(2)
+
+
+* The UIController then also creates a variable called "element" and assigns it equal to the expenses list class if amount (newItem.value) === 'exp' or the income list class if amount === 'inc'. This is stored in a variable called "html".
+
+
+* Using the insertAdjacentHTML method, we append the entry to the appropriate section (expense or income) as follows:
+- document.querySelector(element).insertAdjacentHTML('beforeend', html);
+-- the two arguments are where you want it inserted relative to the tags ('beforeend': or before the end of the tags) and the html to be inserted (stored in variable "html").
+
+
+
+
+
+
+
+So, what is within the "return" objects of each module?
